@@ -42,7 +42,7 @@ public class User {
 
     @Column(name = "max_favorites", nullable = false)
     @Builder.Default
-    private Integer maxFavorites = 10;
+    private Integer maxFavorites = 3;
 
     @Column(name = "premium_until")
     private LocalDateTime premiumUntil;
