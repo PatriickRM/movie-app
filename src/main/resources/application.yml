@@ -1,5 +1,5 @@
 
-# CONFIGURACIÓN DEL SERVIDOR
+# CONFIGURACIï¿½N DEL SERVIDOR
 server:
     port: 8080
 
@@ -20,10 +20,11 @@ spring:
                 format_sql: true
                 dialect: org.hibernate.dialect.PostgreSQLDialect
 
-# CONFIGURACIÓN DE SEGURIDAD (JWT)
+# CONFIGURACIï¿½N DE SEGURIDAD (JWT)
 jwt:
-    secret: MiClaveSecretaSuperSeguraParaElProyectoBiblioteca2024
-    expiration: 86400000
+    secret: MiClaveSecretaSuperSeguraParaEsteProyectoXDD1234567UltraMega
+    expiration: 88800000
+    refresh-expiration: 600000000
 
 #TMDB
 
@@ -37,7 +38,7 @@ tmdb:
 
 gemini:
     api-key: ${GEMINI_API_KEY:tu-api-key-de-gemini}
-    model: gemini-1.5-flash
+    model: gemini-2.0-flash
     base-url: https://generativelanguage.googleapis.com/v1beta/models
     max-tokens: 1000
     temperature: 0.7
