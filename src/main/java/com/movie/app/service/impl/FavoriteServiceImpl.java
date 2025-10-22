@@ -2,7 +2,6 @@ package com.movie.app.service.impl;
 
 import com.movie.app.exception.BadRequestException;
 import com.movie.app.exception.ResourceNotFoundException;
-import com.movie.app.model.dto.*;
 import com.movie.app.model.dto.common.PageResponse;
 import com.movie.app.model.dto.favorite.request.AddFavoriteRequest;
 import com.movie.app.model.dto.favorite.response.FavoriteResponse;
