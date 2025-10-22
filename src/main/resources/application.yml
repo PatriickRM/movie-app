@@ -22,7 +22,7 @@ spring:
 
 # CONFIGURACI�N DE SEGURIDAD (JWT)
 jwt:
-    secret: ${JWT_SECRET}
+    secret: MiClaveSecretaSuperSeguraParaEsteProyectoXDD1234567UltraMega
     expiration: 88800000
     refresh-expiration: 600000000
 
