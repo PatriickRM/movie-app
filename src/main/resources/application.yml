@@ -7,7 +7,7 @@ spring:
     application:
         name: backend
     datasource:
-        url: jdbc:postgresql://${DB_HOST}:5432/${DB_NAME}
+        url: jdbc:postgresql://${DB_HOST}:5432/${DB_NAME}?sslmode=require
         username: ${DB_USER}
         password: ${DB_PASSWORD}
         driver-class-name: org.postgresql.Driver
@@ -22,7 +22,7 @@ spring:
 
 # CONFIGURACI�N DE SEGURIDAD (JWT)
 jwt:
-    secret: MiClaveSecretaSuperSeguraParaEsteProyectoXDD1234567UltraMega
+    secret: ${JWT_SECRET}
     expiration: 88800000
     refresh-expiration: 600000000
 
