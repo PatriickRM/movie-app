@@ -25,11 +25,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
-<<<<<<< HEAD
+
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-=======
->>>>>>> 549fb6403e5ea683d409d8e750af2ae31dd09856
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -54,6 +53,9 @@ public class AIRecommendationServiceImpl implements AIRecommendationService {
 
     @Value("${gemini.base-url}")
     private String geminiBaseUrl;
+
+    @Value("${tmdb.api-key}")
+    private String tmdbApiKey;
 
     //Obtener recomendación de IA
     @Transactional
@@ -307,8 +309,8 @@ public class AIRecommendationServiceImpl implements AIRecommendationService {
         try {
             // Limpiar response (remover markdown si existe)
             String cleanedResponse = aiResponse
-                    .replaceAll("```json", "")
-                    .replaceAll("```", "")
+                    .replaceAll("json", "")
+                    .replaceAll("", "")
                     .trim();
 
             log.debug("Cleaned AI Response: {}", cleanedResponse);
@@ -317,10 +319,9 @@ public class AIRecommendationServiceImpl implements AIRecommendationService {
             JsonArray recommendations = jsonResponse.getAsJsonArray("recommendations");
 
             List<MovieRecommendation> result = new ArrayList<>();
-<<<<<<< HEAD
+
             //
-=======
->>>>>>> 549fb6403e5ea683d409d8e750af2ae31dd09856
+
             for (int i = 0; i < recommendations.size(); i++) {
                 JsonObject rec = recommendations.get(i).getAsJsonObject();
 
@@ -328,12 +329,12 @@ public class AIRecommendationServiceImpl implements AIRecommendationService {
                 String title = rec.get("title").getAsString();
                 String reason = rec.get("reason").getAsString();
 
-<<<<<<< HEAD
+
                 // Verificar y corregir el ID con TMDb
                 movieId = verifyMovieId(title, movieId);
-=======
+
                 log.info("Parsed recommendation - ID: {}, Title: {}", movieId, title);
->>>>>>> 549fb6403e5ea683d409d8e750af2ae31dd09856
+
 
                 result.add(MovieRecommendation.builder()
                         .movieId(movieId)
@@ -350,14 +351,13 @@ public class AIRecommendationServiceImpl implements AIRecommendationService {
             throw new BadRequestException("Error al procesar respuesta de IA: " + e.getMessage());
         }
     }
-<<<<<<< HEAD
-//
+
+    //
     private int verifyMovieId(String title, int aiMovieId) {
         try {
-            String apiKey = "TU_API_KEY_TMDB"; //  Reemplázalo por tu API key real de TMDb
             String url = String.format(
                     "https://api.themoviedb.org/3/search/movie?api_key=%s&query=%s&language=es-ES",
-                    apiKey,
+                    tmdbApiKey,
                     URLEncoder.encode(title, StandardCharsets.UTF_8)
             );
 
@@ -379,17 +379,14 @@ public class AIRecommendationServiceImpl implements AIRecommendationService {
         // Si algo falla, usa el ID original que dio la IA
         return aiMovieId;
     }
-=======
-
->>>>>>> 549fb6403e5ea683d409d8e750af2ae31dd09856
 
 
     //Extraer explicación general
     private String extractExplanation(String aiResponse) {
         try {
             String cleanedResponse = aiResponse
-                    .replaceAll("```json", "")
-                    .replaceAll("```", "")
+                    .replaceAll("json", "")
+                    .replaceAll("", "")
                     .trim();
 
             JsonObject jsonResponse = gson.fromJson(cleanedResponse, JsonObject.class);
@@ -411,7 +408,7 @@ public class AIRecommendationServiceImpl implements AIRecommendationService {
         aiInteractionRepository.save(interaction);
     }
 
-   //Buscar usuario por id
+    //Buscar usuario por id
     private User findUserById(Long userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con ID: " + userId));
