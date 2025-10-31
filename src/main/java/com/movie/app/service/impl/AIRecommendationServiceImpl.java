@@ -189,17 +189,19 @@ public class AIRecommendationServiceImpl implements AIRecommendationService {
                 """
                 Eres un experto cinéfilo y recomendador de películas. Tu tarea es recomendar películas basándote en las preferencias del usuario.
                 
-                REGLAS:
+                REGLAS IMPORTANTES:
                 1. Recomienda exactamente %d películas
-                2. Proporciona el ID de TMDb de cada película (solo el número)
-                3. Explica brevemente por qué recomiendas cada película
-                4. Considera el contexto del usuario si está disponible
+                2. Proporciona el ID EXACTO de TMDb de cada película (SOLO números enteros)
+                3. VERIFICA que el movieId sea correcto - es CRÍTICO que coincida con la película
+                4. Explica brevemente por qué recomiendas cada película
+                5. Considera el contexto del usuario si está disponible
+                6. Usa películas populares y conocidas para evitar errores
                 
                 %s
                 
                 SOLICITUD DEL USUARIO: %s
                 
-                FORMATO DE RESPUESTA:
+                FORMATO DE RESPUESTA (OBLIGATORIO):
                 {
                   "recommendations": [
                     {
@@ -211,7 +213,20 @@ public class AIRecommendationServiceImpl implements AIRecommendationService {
                   "explanation": "Explicación general de las recomendaciones"
                 }
                 
+                EJEMPLOS DE IDs CORRECTOS:
+                - The Shawshank Redemption: 278
+                - The Godfather: 238
+                - The Dark Knight: 155
+                - Pulp Fiction: 680
+                - Forrest Gump: 13
+                - Inception: 27205
+                - Fight Club: 550
+                - The Matrix: 603
+                - Interstellar: 157336
+                - Parasite: 496243
+                
                 Responde SOLO con el JSON, sin texto adicional.
+                ASEGÚRATE de que los movieId sean números enteros válidos de TMDb.
                 """,
                 maxRecommendations,
                 userContext,
@@ -291,26 +306,37 @@ public class AIRecommendationServiceImpl implements AIRecommendationService {
                     .replaceAll("```", "")
                     .trim();
 
+            log.debug("Cleaned AI Response: {}", cleanedResponse);
+
             JsonObject jsonResponse = gson.fromJson(cleanedResponse, JsonObject.class);
             JsonArray recommendations = jsonResponse.getAsJsonArray("recommendations");
 
             List<MovieRecommendation> result = new ArrayList<>();
             for (int i = 0; i < recommendations.size(); i++) {
                 JsonObject rec = recommendations.get(i).getAsJsonObject();
+
+                int movieId = rec.get("movieId").getAsInt();
+                String title = rec.get("title").getAsString();
+                String reason = rec.get("reason").getAsString();
+
+                log.info("Parsed recommendation - ID: {}, Title: {}", movieId, title);
+
                 result.add(MovieRecommendation.builder()
-                        .movieId(rec.get("movieId").getAsInt())
-                        .title(rec.get("title").getAsString())
-                        .reason(rec.get("reason").getAsString())
+                        .movieId(movieId)
+                        .title(title)
+                        .reason(reason)
                         .build());
             }
 
+            log.info("Total recommendations parsed: {}", result.size());
             return result;
 
         } catch (Exception e) {
-            log.error("Error al parsear recomendaciones", e);
-            throw new BadRequestException("Error al procesar respuesta de IA");
+            log.error("Error al parsear recomendaciones: {}", aiResponse, e);
+            throw new BadRequestException("Error al procesar respuesta de IA: " + e.getMessage());
         }
     }
+
 
 
     //Extraer explicación general
