@@ -192,54 +192,45 @@ public class AIRecommendationServiceImpl implements AIRecommendationService {
 
     //Construir prompt completo
     private String buildPrompt(String userPrompt, String userContext, Integer maxRecommendations) {
-        return String.format(
-                """
-                Eres un experto cinéfilo y recomendador de películas. Tu tarea es recomendar películas basándote en las preferencias del usuario.
-                
-                REGLAS IMPORTANTES:
-                1. Recomienda exactamente %d películas
-                2. Proporciona el ID EXACTO de TMDb de cada película (SOLO números enteros)
-                3. VERIFICA que el movieId sea correcto - es CRÍTICO que coincida con la película
-                4. Explica brevemente por qué recomiendas cada película
-                5. Considera el contexto del usuario si está disponible
-                6. Usa películas populares y conocidas para evitar errores
-                
-                %s
-                
-                SOLICITUD DEL USUARIO: %s
-                
-                FORMATO DE RESPUESTA (OBLIGATORIO):
+        return String.format("""
+            Eres un experto en cine y tu tarea es recomendar películas basadas en las preferencias del usuario.
+
+            ⚠INSTRUCCIONES CRÍTICAS:
+            - Devuelve **únicamente JSON válido**.
+            - NO incluyas texto antes ni después del JSON.
+            - NO uses explicaciones fuera del objeto JSON.
+
+            Reglas:
+            1. Recomienda exactamente %d películas.
+            2. Incluye el ID real de TMDb (entero válido).
+            3. Explica brevemente por qué recomiendas cada una.
+            4. Usa películas populares y conocidas.
+            5. Si no sabes el ID exacto, usa 0.
+
+            Contexto del usuario (si existe):
+            %s
+
+            Solicitud del usuario:
+            %s
+
+            FORMATO DE RESPUESTA (OBLIGATORIO):
+            {
+              "recommendations": [
                 {
-                  "recommendations": [
-                    {
-                      "movieId": 550,
-                      "title": "Fight Club",
-                      "reason": "Razón de la recomendación"
-                    }
-                  ],
-                  "explanation": "Explicación general de las recomendaciones"
+                  "movieId": 550,
+                  "title": "Fight Club",
+                  "reason": "Razón de la recomendación"
                 }
-                
-                EJEMPLOS DE IDs CORRECTOS:
-                - The Shawshank Redemption: 278
-                - The Godfather: 238
-                - The Dark Knight: 155
-                - Pulp Fiction: 680
-                - Forrest Gump: 13
-                - Inception: 27205
-                - Fight Club: 550
-                - The Matrix: 603
-                - Interstellar: 157336
-                - Parasite: 496243
-                
-                Responde SOLO con el JSON, sin texto adicional.
-                ASEGÚRATE de que los movieId sean números enteros válidos de TMDb.
-                """,
-                maxRecommendations,
-                userContext,
-                userPrompt
+              ],
+              "explanation": "Explicación general de las recomendaciones"
+            }
+
+            Devuelve **solo** el JSON anterior, sin ningún texto adicional.
+            """,
+                maxRecommendations, userContext, userPrompt
         );
     }
+
 
 
     //Llamar a Gemini API
@@ -305,22 +296,31 @@ public class AIRecommendationServiceImpl implements AIRecommendationService {
     }
 
     //Parsear recomendaciones del response de Gemini
+    //Parsear recomendaciones del response de Gemini
     private List<MovieRecommendation> parseRecommendations(String aiResponse) {
         try {
             // Limpiar response (remover markdown si existe)
             String cleanedResponse = aiResponse
-                    .replaceAll("json", "")
-                    .replaceAll("", "")
+                    .replaceAll("```json", "")
+                    .replaceAll("```", "")
                     .trim();
 
             log.debug("Cleaned AI Response: {}", cleanedResponse);
 
+            // 🔹 AQUI VIENE LA NUEVA PARTE: limpiar cualquier texto fuera del JSON
+            if (!cleanedResponse.startsWith("{")) {
+                int firstBrace = cleanedResponse.indexOf("{");
+                int lastBrace = cleanedResponse.lastIndexOf("}");
+                if (firstBrace != -1 && lastBrace != -1) {
+                    cleanedResponse = cleanedResponse.substring(firstBrace, lastBrace + 1);
+                }
+            }
+
+            // Ahora sí parseamos
             JsonObject jsonResponse = gson.fromJson(cleanedResponse, JsonObject.class);
             JsonArray recommendations = jsonResponse.getAsJsonArray("recommendations");
 
             List<MovieRecommendation> result = new ArrayList<>();
-
-            //
 
             for (int i = 0; i < recommendations.size(); i++) {
                 JsonObject rec = recommendations.get(i).getAsJsonObject();
@@ -329,12 +329,10 @@ public class AIRecommendationServiceImpl implements AIRecommendationService {
                 String title = rec.get("title").getAsString();
                 String reason = rec.get("reason").getAsString();
 
-
                 // Verificar y corregir el ID con TMDb
                 movieId = verifyMovieId(title, movieId);
 
                 log.info("Parsed recommendation - ID: {}, Title: {}", movieId, title);
-
 
                 result.add(MovieRecommendation.builder()
                         .movieId(movieId)
@@ -351,6 +349,7 @@ public class AIRecommendationServiceImpl implements AIRecommendationService {
             throw new BadRequestException("Error al procesar respuesta de IA: " + e.getMessage());
         }
     }
+
 
     //
     private int verifyMovieId(String title, int aiMovieId) {
@@ -385,8 +384,8 @@ public class AIRecommendationServiceImpl implements AIRecommendationService {
     private String extractExplanation(String aiResponse) {
         try {
             String cleanedResponse = aiResponse
-                    .replaceAll("json", "")
-                    .replaceAll("", "")
+                    .replaceAll("```json", "")
+                    .replaceAll("```", "")
                     .trim();
 
             JsonObject jsonResponse = gson.fromJson(cleanedResponse, JsonObject.class);
@@ -408,7 +407,7 @@ public class AIRecommendationServiceImpl implements AIRecommendationService {
         aiInteractionRepository.save(interaction);
     }
 
-    //Buscar usuario por id
+   //Buscar usuario por id
     private User findUserById(Long userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario no encontrado con ID: " + userId));
