@@ -49,6 +49,9 @@ public class SecurityConfig {
                 // Configurar autorización de requests
                 .authorizeHttpRequests(auth -> auth
                         // Endpoints públicos (sin autenticación)
+                        .requestMatchers("/").permitAll()
+                        .requestMatchers("/health").permitAll()
+                        .requestMatchers("/favicon.ico").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/actuator/**").permitAll()
                         .requestMatchers("/error").permitAll()
